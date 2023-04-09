@@ -1,0 +1,40 @@
+name: Build VM Tools
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-20.04
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        # Fetch the Linux submodule with the specified tag
+        submodules: 'recursive'
+        ref: 'v5.15'
+
+    - name: Set up QEMU
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y qemu qemu-user-static binfmt-support
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-aarch64-linux-gnu make flex bison libssl-dev
+        
+    - name: Compile VM Tools
+      run: |
+        make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -C ./tools/vm/
+        
+    - name: Upload binary as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: page-types
+        path: ./tools/vm/page-types
